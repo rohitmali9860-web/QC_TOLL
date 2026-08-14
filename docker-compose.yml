@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  qc-tool:
+    build: .
+    container_name: rpac_bartender_qc_suite
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./uploads:/app/uploads
+      - ./generated_reports:/app/generated_reports
+      - ./bartender_qc.db:/app/bartender_qc.db
+    environment:
+      - FLASK_ENV=production
+      - PYTHONUNBUFFERED=1
