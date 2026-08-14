@@ -36,16 +36,48 @@ init_db()
 if not os.path.exists(os.path.join(DATA_DIR, 'artwork_signed_spec.pdf')):
     build_all_sample_assets()
 
+from modules.template_compare_engine import TemplateCompareEngine
+
 # Instantiate Analyzers
 static_analyzer = StaticQCAnalyzer()
 variable_analyzer = VariableQCAnalyzer()
 serialization_analyzer = SerializationQCAnalyzer()
 spool_analyzer = SpoolQCAnalyzer()
 batch_analyzer = BatchQCAnalyzer()
+template_engine = TemplateCompareEngine()
 
+# --- MULTI-PAGE PORTAL ROUTING (r-pac Style) ---
 @app.route('/')
-def index():
-    return render_template('index.html')
+@app.route('/home.html')
+@app.route('/static/home.html')
+def home_page():
+    return render_template('home.html')
+
+@app.route('/template_compare.html')
+@app.route('/static/template_compare.html')
+@app.route('/static/index.html')
+def template_compare_page():
+    return render_template('template_compare.html')
+
+@app.route('/compare.html')
+@app.route('/static/compare.html')
+def compare_page():
+    return render_template('compare.html')
+
+@app.route('/design_ai_qc.html')
+@app.route('/static/design_ai_qc.html')
+@app.route('/qc')
+def design_ai_qc_page():
+    return render_template('design_ai_qc.html')
+
+@app.route('/auth/me')
+def auth_me():
+    return jsonify({
+        'display_name': 'Rohit Mali',
+        'email': 'rohit.mali@r-pac.com',
+        'role': 'user',
+        'permissions': ['pdf_analyzer', 'template_comparison', 'visual_comparison', 'ai_comparison', 'design_ai_qc', 'rprint_performance']
+    })
 
 @app.route('/api/demo-data', methods=['GET'])
 def get_demo_data():
@@ -69,6 +101,61 @@ def get_demo_data():
             os.path.join(DATA_DIR, 'batch_layouts', '1000341139_SKU3_XL.pdf')
         ]
     })
+
+# --- TEMPLATE COMPARISON SUITE (r-pac Style) ---
+@app.route('/api/template-compare/position', methods=['POST'])
+def api_template_compare_position():
+    try:
+        use_demo = request.form.get('use_demo') == 'true'
+        tolerance_pt = float(request.form.get('tolerance_pt', 5.0))
+        filters_json = request.form.get('filters_json')
+        filter_types = json.loads(filters_json) if filters_json else {'text': True, 'image': False, 'barcode': True, 'vector': False}
+
+        if use_demo:
+            variant = request.form.get('demo_variant', 'pass')
+            pdf_a_path = os.path.join(DATA_DIR, 'layout_pass_sku1.pdf')
+            pdf_b_path = os.path.join(DATA_DIR, 'layout_fail_font_sku2.pdf' if variant == 'fail' else 'layout_pass_sku1.pdf')
+        else:
+            file_a = request.files.get('pdf_a')
+            file_b = request.files.get('pdf_b')
+            if not file_a or not file_b:
+                return jsonify({'status': 'error', 'message': 'PDF A and PDF B are required.'}), 400
+            run_uid = str(uuid.uuid4())[:8]
+            pdf_a_path = os.path.join(UPLOAD_DIR, f"{run_uid}_A_{secure_filename(file_a.filename)}")
+            pdf_b_path = os.path.join(UPLOAD_DIR, f"{run_uid}_B_{secure_filename(file_b.filename)}")
+            file_a.save(pdf_a_path)
+            file_b.save(pdf_b_path)
+
+        res = template_engine.run_position_match(pdf_a_path, pdf_b_path, tolerance_pt, filter_types)
+        return jsonify({'status': 'success', 'result': res})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/api/template-compare/pixel-density', methods=['POST'])
+def api_template_compare_pixel_density():
+    try:
+        use_demo = request.form.get('use_demo') == 'true'
+        blur_amount = int(request.form.get('blur_amount', 21))
+
+        if use_demo:
+            variant = request.form.get('demo_variant', 'pass')
+            pdf_a_path = os.path.join(DATA_DIR, 'layout_pass_sku1.pdf')
+            pdf_b_path = os.path.join(DATA_DIR, 'layout_fail_font_sku2.pdf' if variant == 'fail' else 'layout_pass_sku1.pdf')
+        else:
+            file_a = request.files.get('pdf_a')
+            file_b = request.files.get('pdf_b')
+            if not file_a or not file_b:
+                return jsonify({'status': 'error', 'message': 'PDF A and PDF B are required.'}), 400
+            run_uid = str(uuid.uuid4())[:8]
+            pdf_a_path = os.path.join(UPLOAD_DIR, f"{run_uid}_A_{secure_filename(file_a.filename)}")
+            pdf_b_path = os.path.join(UPLOAD_DIR, f"{run_uid}_B_{secure_filename(file_b.filename)}")
+            file_a.save(pdf_a_path)
+            file_b.save(pdf_b_path)
+
+        res = template_engine.run_pixel_density_match(pdf_a_path, pdf_b_path, blur_amount)
+        return jsonify({'status': 'success', 'result': res})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
 
 # --- MODULE 1: STATIC ARTWORK QC ---
 @app.route('/api/qc/static', methods=['POST'])

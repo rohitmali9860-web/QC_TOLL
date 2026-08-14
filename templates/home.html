@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF Analysis Tools - Home</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #00285e 0%, #1e3a8a 100%);
+      min-height: 100vh;
+      padding: 2rem;
+      color: #1e293b;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    /* User bar */
+    .user-bar {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .user-bar .user-info {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: white;
+      font-size: 0.95rem;
+      font-weight: 500;
+    }
+    .user-bar .role-badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.2rem 0.6rem;
+      border-radius: 9999px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .role-badge.admin {
+      background: #f59e0b;
+      color: #78350f;
+    }
+    .role-badge.user {
+      background: #10b981;
+      color: #064e3b;
+    }
+    .user-bar a.user-btn {
+      color: rgba(255, 255, 255, 0.85);
+      text-decoration: none;
+      font-size: 0.875rem;
+      padding: 0.35rem 0.75rem;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      transition: all 0.2s;
+    }
+    .user-bar a.user-btn:hover {
+      background: rgba(255, 255, 255, 0.15);
+      color: white;
+    }
+    /* Header */
+    header {
+      text-align: center;
+      color: white;
+      margin-bottom: 3rem;
+    }
+    .logo-container {
+      margin-bottom: 1rem;
+    }
+    .logo-container img {
+      height: 70px;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15));
+    }
+    header h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      letter-spacing: -0.02em;
+    }
+    header p {
+      font-size: 1.15rem;
+      color: #93c5fd;
+      font-weight: 400;
+    }
+    /* Tools Grid */
+    .tools-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2.5rem;
+    }
+    .tool-card {
+      background: white;
+      border-radius: 12px;
+      padding: 2rem;
+      text-decoration: none;
+      color: inherit;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      transition: all 0.2s ease-in-out;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(226, 232, 240, 0.8);
+    }
+    .tool-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      border-color: #3b82f6;
+    }
+    .tool-card.card-disabled {
+      opacity: 0.6;
+      pointer-events: none;
+    }
+    .tool-icon {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      display: inline-block;
+    }
+    .tool-title {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: #1e3a8a;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .tool-badge {
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.2rem 0.6rem;
+      border-radius: 9999px;
+      background: #eff6ff;
+      color: #2563eb;
+    }
+    .tool-description {
+      color: #64748b;
+      line-height: 1.5;
+      font-size: 0.95rem;
+      margin-bottom: 1.25rem;
+      flex-grow: 1;
+    }
+    .tool-footer {
+      display: flex;
+      align-items: center;
+      color: #2563eb;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+    .tool-footer svg {
+      margin-left: 0.25rem;
+      transition: transform 0.2s;
+    }
+    .tool-card:hover .tool-footer svg {
+      transform: translateX(4px);
+    }
+    footer {
+      text-align: center;
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 0.875rem;
+      padding: 1rem 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- User Bar -->
+    <div class="user-bar">
+      <div class="user-info">
+        <span>👤 Rohit Mali</span>
+        <span class="role-badge user" id="roleBadge">USER</span>
+      </div>
+      <a href="/admin/users" class="user-btn" id="btnUserMgmt" style="display: inline-flex; align-items: center; gap: 4px;">
+        ⚙️ User Management
+      </a>
+      <a href="/auth/logout" class="user-btn">🚪 Logout</a>
+    </div>
+
+    <!-- Header -->
+    <header>
+      <div class="logo-container">
+        <img src="/static/Logo/RPAC-LOGO-TAGLINE.png" alt="r-pac logo">
+      </div>
+      <h1>Layout Analysis Tools</h1>
+      <p>AI Powered PDF comparison and analysis suite</p>
+    </header>
+
+    <!-- Tools Grid -->
+    <div class="tools-grid">
+      <!-- Layout Analyzer -->
+      <a href="/template_compare.html" class="tool-card" id="card-layout_analyzer">
+        <div>
+          <div class="tool-icon">📋</div>
+          <div class="tool-title">
+            Layout Analyzer
+            <span class="tool-badge">Single PDF</span>
+          </div>
+          <p class="tool-description">Extract and analyze fields, fonts, colors, and layout from a single template with smart coordinate mapping.</p>
+        </div>
+        <div class="tool-footer">
+          Open Analyzer
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </div>
+      </a>
+
+      <!-- Template Comparison -->
+      <a href="/template_compare.html" class="tool-card" id="card-template_comparison">
+        <div>
+          <div class="tool-icon">🔍</div>
+          <div class="tool-title">
+            Template Comparison
+            <span class="tool-badge" style="background:#dcfce7; color:#15803d;">Position • Pixel Density</span>
+          </div>
+          <p class="tool-description">Field-by-field comparison with Position scoring and detailed mismatch analysis against spec PDF.</p>
+        </div>
+        <div class="tool-footer">
+          Compare Templates
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </div>
+      </a>
+
+      <!-- Visual Comparison -->
+      <a href="/compare.html" class="tool-card" id="card-visual_comparison">
+        <div>
+          <div class="tool-icon">👁️</div>
+          <div class="tool-title">
+            Visual Comparison
+            <span class="tool-badge" style="background:#e0e7ff; color:#4338ca;">Visual Diff</span>
+          </div>
+          <p class="tool-description">Side-by-side visual overlay comparison with interactive layer controls and swipe slider.</p>
+        </div>
+        <div class="tool-footer">
+          Visual Diff
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </div>
+      </a>
+
+      <!-- Design AI QC (Full BarTender Suite) -->
+      <a href="/design_ai_qc.html" class="tool-card" id="card-design_ai_qc" style="border: 2px solid #3b82f6;">
+        <div>
+          <div class="tool-icon">✨</div>
+          <div class="tool-title">
+            Design AI QC
+            <span class="tool-badge" style="background:#fef3c7; color:#b45309;">Full Workflow</span>
+          </div>
+          <p class="tool-description">Complete QC workflow with Static Spec, Variable Order Mapping, RFID SGTIN-96, Thermal ZPL preview, 50% Gate, defect screenshots, and PDF/Excel report generation.</p>
+        </div>
+        <div class="tool-footer" style="color: #1d4ed8; font-weight: 700;">
+          Launch Design AI QC
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </div>
+      </a>
+
+      <!-- AI Comparison -->
+      <a href="/template_compare.html" class="tool-card" id="card-ai_comparison">
+        <div>
+          <div class="tool-icon">🤖</div>
+          <div class="tool-title">
+            AI Comparison
+            <span class="tool-badge" style="background:#fce7f3; color:#9d174d;">AI Powered</span>
+          </div>
+          <p class="tool-description">AI-powered analysis to identify and suggest corrections for label alignment, fonts, barcodes, and layouts.</p>
+        </div>
+        <div class="tool-footer">
+          AI Analysis
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </div>
+      </a>
+
+      <!-- R-Print Performance -->
+      <a href="/design_ai_qc.html" class="tool-card" id="card-rprint_performance">
+        <div>
+          <div class="tool-icon">⚡</div>
+          <div class="tool-title">
+            R-Print Performance
+            <span class="tool-badge" style="background:#f1f5f9; color:#475569;">Analytics • AI</span>
+          </div>
+          <p class="tool-description">Transaction processing analytics, thermal spool verification, throughput metrics, and AI-powered insights.</p>
+        </div>
+        <div class="tool-footer">
+          View Analytics
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </div>
+      </a>
+    </div>
+
+    <footer>
+      <p>© 2026 Layout Analysis Tools • Powered by AI • r-pac International</p>
+    </footer>
+  </div>
+</body>
+</html>

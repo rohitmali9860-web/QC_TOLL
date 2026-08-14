@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF Template Comparison</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="stylesheet" href="/static/css/template_compare.css">
+  <link rel="stylesheet" href="/static/css/field_details.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="container">
+    <header style="margin-bottom: 2rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+          <img src="/static/Logo/RPAC-LOGO-TAGLINE.png" alt="r-pac" style="height: 52px; display: block;">
+          <h1 style="margin: 0; font-size: 2rem; color: white;">Template Layout Comparison</h1>
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <button onclick="loadDemoPair('pass')" style="background:#16a34a; color:white; border:none; padding:6px 14px; border-radius:8px; font-weight:600; cursor:pointer;">⚡ Pass Pair (100%)</button>
+          <button onclick="loadDemoPair('fail')" style="background:#dc2626; color:white; border:none; padding:6px 14px; border-radius:8px; font-weight:600; cursor:pointer;">⚠️ Mismatch Pair</button>
+          <a href="/home.html" style="text-decoration: none; font-size: 2rem;" title="Home">🏠</a>
+        </div>
+      </div>
+      <p style="color: rgba(255,255,255,0.85); font-size: 1rem;">Compare two PDFs and analyze field-by-field differences with Position and Pixel Density scoring.</p>
+    </header>
+
+    <!-- Upload Section -->
+    <div class="upload-section">
+      <div class="upload-zone">
+        <h3>Original Spec (PDF A)</h3>
+        <div class="drop-zone" id="dropZoneA">
+          <div class="drop-content">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+            <p>Drop PDF A here or click to browse</p>
+            <span class="file-name" id="fileNameA"></span>
+          </div>
+          <input type="file" id="fileInputA" accept="application/pdf" hidden>
+        </div>
+      </div>
+
+      <div class="upload-zone">
+        <h3>System Output (PDF B)</h3>
+        <div class="drop-zone" id="dropZoneB">
+          <div class="drop-content">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+            <p>Drop PDF B here or click to browse</p>
+            <span class="file-name" id="fileNameB"></span>
+          </div>
+          <input type="file" id="fileInputB" accept="application/pdf" hidden>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tolerance Control for Position -->
+    <div class="tolerance-control">
+      <label for="toleranceSlider">
+        <strong>Position Tolerance:</strong> ±<span id="toleranceValue">5</span> points
+      </label>
+      <input type="range" id="toleranceSlider" min="0" max="15" value="5" step="0.5">
+      <p class="tolerance-hint">Higher tolerance = more lenient matching (accepts larger position differences)</p>
+    </div>
+
+    <!-- Blur Control for Pixel Density -->
+    <div class="tolerance-control">
+      <label for="blurSlider">
+        <strong>Pixel Density Blur Amount:</strong> <span id="blurValue">21</span> pixels
+      </label>
+      <input type="range" id="blurSlider" min="5" max="51" value="21" step="2">
+      <p class="tolerance-hint">Higher blur = more forgiving (ignores small details), Lower blur = stricter (detects minor differences)</p>
+    </div>
+
+    <!-- Type Filters -->
+    <div class="tolerance-control type-filters">
+      <label>
+        <strong>Filter by Type:</strong> <span class="filter-hint" style="color:#64748b; font-size:0.8rem;">Select which element types to compare</span>
+      </label>
+      <div class="checkbox-group">
+        <label class="checkbox-label">
+          <input type="checkbox" id="filterText" checked>
+          <span class="type-badge type-text">Text</span>
+        </label>
+        <label class="checkbox-label">
+          <input type="checkbox" id="filterImage">
+          <span class="type-badge type-image">Image</span>
+        </label>
+        <label class="checkbox-label">
+          <input type="checkbox" id="filterBarcode" checked>
+          <span class="type-badge type-barcode">Barcode</span>
+        </label>
+        <label class="checkbox-label">
+          <input type="checkbox" id="filterVector">
+          <span class="type-badge type-vector">Vector</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+      <button id="btnGLM" class="btn btn-primary" disabled>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7"></rect>
+          <rect x="14" y="3" width="7" height="7"></rect>
+          <rect x="14" y="14" width="7" height="7"></rect>
+          <rect x="3" y="14" width="7" height="7"></rect>
+        </svg>
+        Run Position Match
+      </button>
+
+      <button id="btnSSIM" class="btn btn-secondary" disabled>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+          <line x1="1" y1="10" x2="23" y2="10"></line>
+        </svg>
+        Run Pixel Density Match
+      </button>
+    </div>
+
+    <!-- Loading Indicator -->
+    <div class="loading" id="loading" hidden>
+      <div class="spinner"></div>
+      <p>Comparing PDFs...</p>
+    </div>
+
+    <!-- Results Panel -->
+    <div class="results-panel" id="resultsPanel" hidden>
+      <h2>Comparison Results</h2>
+      <div class="result-card">
+        <div class="score-display">
+          <div class="score-label">Match Score</div>
+          <div class="score-value" id="scoreValue">-</div>
+          <div class="score-percentage" id="scorePercentage">-</div>
+        </div>
+        <div class="method-info" id="methodInfo"></div>
+      </div>
+
+      <div class="details-section" id="detailsSection"></div>
+
+      <div class="visual-section" id="visualSection" hidden>
+        <h3>Visual Heatmap Comparison</h3>
+        <img id="diffImage" src="" alt="Difference Map" style="max-height: 480px; object-fit: contain;">
+      </div>
+
+      <!-- View Field Details Button -->
+      <div class="field-details-actions" id="fieldDetailsActions" style="margin-top: 1.5rem;" hidden>
+        <button id="btnViewFields" class="btn btn-secondary">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
+          View Field Details
+        </button>
+      </div>
+    </div>
+
+    <!-- Field Details Modal -->
+    <div id="fieldDetailsModal" class="modal" hidden>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Field Details & Coordinate Analysis</h2>
+          <button id="closeModal" class="close-btn">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="pdf-selector">
+            <button id="showFieldsA" class="pdf-tab active">PDF A Fields</button>
+            <button id="showFieldsB" class="pdf-tab">PDF B Fields</button>
+            <button id="showMatched" class="pdf-tab">Matched Fields</button>
+            <button id="showMismatched" class="pdf-tab">Mismatched Fields</button>
+          </div>
+          <div class="table-container">
+            <table id="fieldsTable">
+              <thead id="fieldsTableHead">
+                <tr>
+                  <th>Field #</th>
+                  <th>Type</th>
+                  <th>Text / Value</th>
+                  <th>Coordinates (x0, y0, x1, y1)</th>
+                </tr>
+              </thead>
+              <tbody id="fieldsTableBody">
+                <!-- Populated dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer style="margin-top: 3rem; text-align: center; color: rgba(255,255,255,0.7); font-size: 0.85rem;">
+      <p>© 2026 Layout Analysis Tools • Powered by AI • r-pac International</p>
+    </footer>
+  </div>
+
+  <script src="/static/js/template_compare.js"></script>
+</body>
+</html>

@@ -1,0 +1,156 @@
+/* ==========================================================================
+   field_details.css - Modal and Field Table Styles for r-pac Template QC
+   ========================================================================== */
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1.5rem;
+}
+
+.modal-content {
+  background: #ffffff;
+  border-radius: 16px;
+  max-width: 960px;
+  width: 100%;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  animation: modalIn 0.25s ease-out;
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.95) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.modal-header h2 {
+  font-size: 1.25rem;
+  color: #1e3a8a;
+  margin: 0;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 1.75rem;
+  color: #64748b;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.close-btn:hover {
+  color: #0f172a;
+}
+
+.modal-body {
+  padding: 1.5rem;
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* Modal Navigation Tabs */
+.pdf-selector {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 0.5rem;
+}
+
+.pdf-tab {
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  background: #f1f5f9;
+  color: #475569;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pdf-tab:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.pdf-tab.active {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+/* Fields Table */
+.table-container {
+  overflow-x: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+#fieldsTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  text-align: left;
+}
+
+#fieldsTable th {
+  background: #0f172a;
+  color: #ffffff;
+  padding: 0.75rem 1rem;
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+}
+
+#fieldsTable td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e2e8f0;
+  color: #1e293b;
+}
+
+#fieldsTable tr:nth-child(even) {
+  background: #f8fafc;
+}
+
+#fieldsTable tr:hover {
+  background: #eff6ff;
+}
+
+.badge-matched {
+  background: #dcfce7;
+  color: #166534;
+  padding: 0.2rem 0.5rem;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 0.75rem;
+}
+
+.badge-mismatched {
+  background: #fee2e2;
+  color: #991b1b;
+  padding: 0.2rem 0.5rem;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 0.75rem;
+}

@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>r-pac Layout Analysis Tools — BarTender Layout QC Suite</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- ========================================================================
+       Top Navigation & Brand Banner
+       ======================================================================== -->
+  <header class="rpac-header">
+    <div class="brand-wrapper">
+      <div class="rpac-logo">r-<span>pac</span></div>
+      <div class="brand-text">
+        <h1>Layout Analysis Tools</h1>
+        <p>AI Powered PDF comparison and analysis suite • Bring Identity to Life™</p>
+      </div>
+    </div>
+    <div class="header-meta">
+      <div class="meta-chip">
+        <span>Designer:</span>
+        <strong id="meta-designer">Rohit</strong>
+      </div>
+      <div class="meta-chip">
+        <span>Active RPO:</span>
+        <strong id="meta-rpo">1000341139</strong>
+      </div>
+      <div class="meta-chip">
+        <span>Item:</span>
+        <strong id="meta-item">LS-SS26-PT</strong>
+      </div>
+      <button class="demo-selector" onclick="loadDemoDataset('pass')">⚡ Load Pass Demo (100%)</button>
+      <button class="demo-selector" style="background:#dc2626;" onclick="loadDemoDataset('fail')">⚠️ Load Fail Demo (<50%)</button>
+    </div>
+  </header>
+
+  <!-- ========================================================================
+       Main Application Container
+       ======================================================================== -->
+  <main class="main-container">
+
+    <!-- ======================================================================
+         Top Modular Card Portal Hub (Matching Reference Photo)
+         ====================================================================== -->
+    <section class="portal-grid">
+      <div class="portal-card active" data-tab="tab-static" onclick="switchTab('tab-static')">
+        <div class="portal-icon">📋</div>
+        <h3 class="portal-title">Layout Analyzer</h3>
+        <p class="portal-desc">Extract and analyze fields, fonts, colors, and layout specs from BarTender template</p>
+        <span class="portal-tag">Single PDF</span>
+      </div>
+
+      <div class="portal-card" data-tab="tab-visual" onclick="switchTab('tab-visual')">
+        <div class="portal-icon">👁️</div>
+        <h3 class="portal-title">Visual Comparison</h3>
+        <p class="portal-desc">Side-by-side visual overlay comparison with interactive swipe slider and layer diff</p>
+        <span class="portal-tag">Visual Diff</span>
+      </div>
+
+      <div class="portal-card" data-tab="tab-variable" onclick="switchTab('tab-variable')">
+        <div class="portal-icon">📊</div>
+        <h3 class="portal-title">Variable Data QC</h3>
+        <p class="portal-desc">Order CSV/Excel mapping validation, template builder, and per-record field matching</p>
+        <span class="portal-tag">Order Mapping</span>
+      </div>
+
+      <div class="portal-card" data-tab="tab-rfid" onclick="switchTab('tab-rfid')">
+        <div class="portal-icon">📡</div>
+        <h3 class="portal-title">RFID & Serialization</h3>
+        <p class="portal-desc">SGTIN-96 format verification, duplicate & sequence gap scanner, and SKU validation</p>
+        <span class="portal-tag">RFID • Serial</span>
+      </div>
+
+      <div class="portal-card" data-tab="tab-spool" onclick="switchTab('tab-spool')">
+        <div class="portal-icon">🖨️</div>
+        <h3 class="portal-title">Thermal Spool Preview</h3>
+        <p class="portal-desc">ZPL print spool parsing, auto-dimensions, live render, and 3-way cross-check</p>
+        <span class="portal-tag">ZPL Preview</span>
+      </div>
+
+      <div class="portal-card" data-tab="tab-batch" onclick="switchTab('tab-batch')">
+        <div class="portal-icon">📦</div>
+        <h3 class="portal-title">Batch Multi-Layout</h3>
+        <p class="portal-desc">Simultaneous multi-SKU batch execution with consolidated pass/fail matrix</p>
+        <span class="portal-tag">Multi-SKU</span>
+      </div>
+
+      <div class="portal-card" data-tab="tab-final" onclick="switchTab('tab-final')">
+        <div class="portal-icon">✨</div>
+        <h3 class="portal-title">Design AI QC Stage</h3>
+        <p class="portal-desc">Staged scoring rollup, 50% gate, defect screenshots, and executive PDF audit certificate</p>
+        <span class="portal-tag">Full Workflow</span>
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         TAB 1: STATIC ARTWORK VS LAYOUT QC
+         ====================================================================== -->
+    <section id="tab-static" class="qc-tab-content active">
+      <div class="workspace-card">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title"><span>📋</span> Static Artwork vs. BarTender Layout QC</h2>
+            <p class="section-subtitle">Module 1 — Verify color palette, fonts, point sizes, X/Y placement, fixed vs. variable rules, and dieline specs.</p>
+          </div>
+          <button class="btn-primary" onclick="runStaticQC()">▶ Run Static Layout QC</button>
+        </div>
+
+        <div class="upload-grid">
+          <div class="dropzone" id="dz-artwork" onclick="document.getElementById('file-artwork').click()">
+            <div class="dropzone-icon">📄</div>
+            <div class="dropzone-text">Original Signed Artwork PDF</div>
+            <div class="dropzone-hint">Upload approved customer specification sheet</div>
+            <input type="file" id="file-artwork" accept=".pdf" style="display:none" onchange="handleFileSelected(this, 'badge-art')">
+            <div class="file-selected-badge" id="badge-art">✓ Artwork File Loaded</div>
+          </div>
+
+          <div class="dropzone" id="dz-layout" onclick="document.getElementById('file-layout').click()">
+            <div class="dropzone-icon">🏷️</div>
+            <div class="dropzone-text">BarTender Layout (PP PDF)</div>
+            <div class="dropzone-hint">Upload BarTender production proof export</div>
+            <input type="file" id="file-layout" accept=".pdf" style="display:none" onchange="handleFileSelected(this, 'badge-lay')">
+            <div class="file-selected-badge" id="badge-lay">✓ Layout File Loaded</div>
+          </div>
+        </div>
+
+        <!-- Static QC Results Matrix -->
+        <div id="static-results-container" style="display:none;">
+          <div class="section-header" style="margin-top: 1.5rem;">
+            <h3 class="section-title">Field-by-Field Verification Matrix</h3>
+            <div id="static-score-badge" class="badge-status badge-pass">Score: 100%</div>
+          </div>
+
+          <div class="table-wrapper">
+            <table class="qc-table" id="static-checks-table">
+              <thead>
+                <tr>
+                  <th>Field Name</th>
+                  <th>Category</th>
+                  <th>Expected Artwork Spec</th>
+                  <th>Actual Layout Finding</th>
+                  <th>Status</th>
+                  <th>Details</th>
+                </tr>
+              </thead>
+              <tbody><!-- Populated dynamically --></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         TAB 2: INTERACTIVE VISUAL COMPARISON
+         ====================================================================== -->
+    <section id="tab-visual" class="qc-tab-content">
+      <div class="workspace-card">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title"><span>👁️</span> Visual Comparison & Difference Inspector</h2>
+            <p class="section-subtitle">Side-by-side visual diff overlay with interactive swipe slider and green/red bounding box bounding analysis.</p>
+          </div>
+          <div style="display:flex; gap:0.75rem;">
+            <button class="btn-secondary" onclick="toggleOverlayBoxes()">Toggle Bounding Boxes</button>
+            <button class="btn-primary" onclick="runStaticQC()">Refresh Visual Render</button>
+          </div>
+        </div>
+
+        <div class="visual-diff-container">
+          <!-- Split Screen Swipe View -->
+          <div class="diff-preview-box">
+            <h4>Interactive Swipe Difference Slider</h4>
+            <div class="swipe-diff-wrapper" id="swipe-container">
+              <img src="/static/img/placeholder_label.png" id="swipe-art-img" class="swipe-image-base" alt="Artwork Base">
+              <img src="/static/img/placeholder_label.png" id="swipe-lay-img" class="swipe-image-overlay" alt="Layout Overlay">
+              <div class="swipe-handle" id="swipe-bar"></div>
+            </div>
+            <p style="font-size:0.75rem; color:var(--text-muted); margin-top:0.75rem;">Drag the blue handle horizontally across the label to compare</p>
+          </div>
+
+          <!-- Annotated Bounding Box Inspection -->
+          <div class="diff-preview-box">
+            <h4>Automated Anomaly & Bounding Box Overlay</h4>
+            <div class="label-canvas-wrapper">
+              <img src="/static/img/placeholder_label.png" id="annotated-diff-img" alt="Annotated Layout">
+            </div>
+            <div style="display:flex; gap:1rem; margin-top:0.75rem; font-size:0.8rem;">
+              <span style="color:#16a34a;">■ Green: Match (±0.5mm)</span>
+              <span style="color:#dc2626;">■ Red: Shifted / Missing / Font Mismatch</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         TAB 3: VARIABLE DATA & FIELD MAPPING QC
+         ====================================================================== -->
+    <section id="tab-variable" class="qc-tab-content">
+      <div class="workspace-card">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title"><span>📊</span> Variable Data & Order Field Mapping QC</h2>
+            <p class="section-subtitle">Module 2 — Validate that dynamic fields (Size, Article, Color, RPO, SKU, QTY) reflect live order records per mapping rules.</p>
+          </div>
+          <div style="display:flex; gap:0.5rem;">
+            <a href="/api/qc/mapping/template" class="btn-secondary">📥 Download Mapping Template (.xlsx)</a>
+            <button class="btn-primary" onclick="runVariableQC()">▶ Validate Variable Data</button>
+          </div>
+        </div>
+
+        <div class="upload-grid">
+          <div class="dropzone" onclick="document.getElementById('file-order').click()">
+            <div class="dropzone-icon">📑</div>
+            <div class="dropzone-text">Order Data File (Excel / CSV)</div>
+            <div class="dropzone-hint">Upload RPO order table (e.g. 1000341139_Loveskin-PT_001.xlsx)</div>
+            <input type="file" id="file-order" accept=".csv,.xlsx,.xls" style="display:none" onchange="handleFileSelected(this, 'badge-order')">
+            <div class="file-selected-badge" id="badge-order">✓ Order File Loaded</div>
+          </div>
+
+          <div class="dropzone" onclick="document.getElementById('file-mapping').click()">
+            <div class="dropzone-icon">🗺️</div>
+            <div class="dropzone-text">Custom Field Mapping (Optional Excel)</div>
+            <div class="dropzone-hint">Upload custom template-to-column mapping file or use default</div>
+            <input type="file" id="file-mapping" accept=".xlsx,.xls" style="display:none" onchange="handleFileSelected(this, 'badge-map')">
+            <div class="file-selected-badge" id="badge-map">✓ Custom Mapping Loaded</div>
+          </div>
+        </div>
+
+        <!-- Record Selector Bar -->
+        <div style="background:#f1f5f9; padding:0.75rem 1.25rem; border-radius:8px; display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;">
+          <div style="font-size:0.85rem; font-weight:600; color:#334155;">Active Order Record to Validate:</div>
+          <select id="select-order-record" style="padding:0.4rem 0.8rem; border-radius:6px; border:1px solid #cbd5e1; font-weight:600;" onchange="runVariableQC()">
+            <option value="0">Record #1: SKU 1/3 (Size: M, QTY: 5)</option>
+            <option value="1">Record #2: SKU 2/3 (Size: L, QTY: 5)</option>
+            <option value="2">Record #3: SKU 3/3 (Size: XL, QTY: 5)</option>
+          </select>
+        </div>
+
+        <!-- Variable QC Discrepancy Matrix -->
+        <div id="var-results-container" style="display:none;">
+          <div class="section-header">
+            <h3 class="section-title">Per-Field Mapping & Data Verification Table</h3>
+            <div id="var-score-badge" class="badge-status badge-pass">Score: 100%</div>
+          </div>
+
+          <div class="table-wrapper">
+            <table class="qc-table" id="variable-checks-table">
+              <thead>
+                <tr>
+                  <th>BarTender Template Field</th>
+                  <th>Mapped Order Column</th>
+                  <th>Expected Value (Order)</th>
+                  <th>Actual Extracted Value (Layout)</th>
+                  <th>Status</th>
+                  <th>Discrepancy Details</th>
+                </tr>
+              </thead>
+              <tbody><!-- Populated dynamically --></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         TAB 4: RFID & SERIALIZATION QC
+         ====================================================================== -->
+    <section id="tab-rfid" class="qc-tab-content">
+      <div class="workspace-card">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title"><span>📡</span> RFID / Non-RFID & Serialization QC</h2>
+            <p class="section-subtitle">Module 3 — Validate GS1 SGTIN-96 EPC binary structure, uniqueness, continuous serial increments, and gap detection.</p>
+          </div>
+          <button class="btn-primary" onclick="runSerializationQC()">▶ Run Serialization QC</button>
+        </div>
+
+        <!-- Item Classification Controls -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-bottom:1.5rem;">
+          <div style="background:#f8fafc; border:1px solid var(--border-color); padding:1.25rem; border-radius:12px;">
+            <label style="font-weight:700; font-size:0.9rem; margin-bottom:0.5rem; display:block;">Item Code Classification:</label>
+            <div style="display:flex; gap:1.5rem;">
+              <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer;">
+                <input type="radio" name="radio-rfid" value="true" checked onchange="toggleRFIDMode()"> <strong>RFID Item Code</strong>
+              </label>
+              <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer;">
+                <input type="radio" name="radio-rfid" value="false" onchange="toggleRFIDMode()"> Non-RFID Item Code
+              </label>
+            </div>
+          </div>
+
+          <div style="background:#f8fafc; border:1px solid var(--border-color); padding:1.25rem; border-radius:12px;">
+            <label style="font-weight:700; font-size:0.9rem; margin-bottom:0.5rem; display:block;">Serialization Mode:</label>
+            <div style="display:flex; gap:1.5rem;">
+              <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer;">
+                <input type="radio" name="radio-serialized" value="true" checked> <strong>Serialized (Unique EPC/Serial per piece)</strong>
+              </label>
+              <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer;">
+                <input type="radio" name="radio-serialized" value="false"> Non-Serialized (Static tag data)
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- SGTIN-96 Hex Inspector -->
+        <div id="rfid-inspector-card" style="background:#0f172a; color:#ffffff; padding:1.5rem; border-radius:12px; margin-bottom:1.5rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+            <h4 style="font-size:0.95rem; color:#60a5fa;">SGTIN-96 96-bit Binary Structure Breakdown</h4>
+            <span style="font-size:0.75rem; background:#1e293b; padding:0.2rem 0.6rem; border-radius:10px;">Header: 0x30 (00110000)</span>
+          </div>
+          <div style="font-family:monospace; font-size:0.95rem; background:#1e293b; padding:0.75rem 1rem; border-radius:8px; letter-spacing:1px; margin-bottom:0.75rem;" id="epc-hex-display">
+            3034027780000000000003E9
+          </div>
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap:0.75rem; font-size:0.75rem;">
+            <div style="background:rgba(255,255,255,0.05); padding:0.5rem; border-radius:6px;">
+              <div style="color:#94a3b8;">Filter Value</div>
+              <div style="font-weight:bold; color:#38bdf8;" id="epc-filter">POS Item (1)</div>
+            </div>
+            <div style="background:rgba(255,255,255,0.05); padding:0.5rem; border-radius:6px;">
+              <div style="color:#94a3b8;">Partition</div>
+              <div style="font-weight:bold; color:#38bdf8;" id="epc-partition">Partition 5</div>
+            </div>
+            <div style="background:rgba(255,255,255,0.05); padding:0.5rem; border-radius:6px;">
+              <div style="color:#94a3b8;">Company Prefix</div>
+              <div style="font-weight:bold; color:#38bdf8;" id="epc-prefix">0843210</div>
+            </div>
+            <div style="background:rgba(255,255,255,0.05); padding:0.5rem; border-radius:6px;">
+              <div style="color:#94a3b8;">Item Reference</div>
+              <div style="font-weight:bold; color:#38bdf8;" id="epc-itemref">100341</div>
+            </div>
+            <div style="background:rgba(255,255,255,0.05); padding:0.5rem; border-radius:6px;">
+              <div style="color:#94a3b8;">Serial (Dec)</div>
+              <div style="font-weight:bold; color:#4ade80;" id="epc-serial">#1001</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Serialization Check Table -->
+        <div id="serial-results-container" style="display:none;">
+          <div class="section-header">
+            <h3 class="section-title">Batch Serialization & Sequence Integrity Report</h3>
+            <div id="serial-score-badge" class="badge-status badge-pass">Score: 100%</div>
+          </div>
+          <div class="table-wrapper">
+            <table class="qc-table" id="serial-checks-table">
+              <thead>
+                <tr>
+                  <th>Validation Rule</th>
+                  <th>Expected Requirement</th>
+                  <th>Batch Evaluation</th>
+                  <th>Status</th>
+                  <th>Diagnostic Details</th>
+                </tr>
+              </thead>
+              <tbody><!-- Populated dynamically --></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         TAB 5: THERMAL / ZPL SPOOL PREVIEW QC
+         ====================================================================== -->
+    <section id="tab-spool" class="qc-tab-content">
+      <div class="workspace-card">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title"><span>🖨️</span> RFID Thermal Format Preview & Spool QC</h2>
+            <p class="section-subtitle">Module 4 — Parse ZPL thermal output, auto-detect print dimensions, render live preview, and cross-check against Artwork & Order.</p>
+          </div>
+          <button class="btn-primary" onclick="runSpoolQC()">▶ Render & Verify Spool</button>
+        </div>
+
+        <div class="upload-grid">
+          <div class="dropzone" onclick="document.getElementById('file-zpl').click()">
+            <div class="dropzone-icon">📜</div>
+            <div class="dropzone-text">Upload ZPL Spool File (.zpl, .prn, .txt)</div>
+            <div class="dropzone-hint">Upload thermal printer stream or paste below</div>
+            <input type="file" id="file-zpl" accept=".zpl,.prn,.txt" style="display:none" onchange="handleFileSelected(this, 'badge-zpl')">
+            <div class="file-selected-badge" id="badge-zpl">✓ ZPL Spool Loaded</div>
+          </div>
+
+          <div style="display:flex; flex-direction:column;">
+            <label style="font-weight:600; font-size:0.85rem; margin-bottom:0.25rem;">Direct ZPL Code Stream:</label>
+            <textarea id="zpl-text-input" style="width:100%; height:120px; font-family:monospace; font-size:0.8rem; padding:0.5rem; border:1px solid #cbd5e1; border-radius:8px;" placeholder="^XA&#10;^PW400^LL600&#10;^FO50,50^A0N,28,28^FDLOVESKIN APPAREL^FS&#10;..."></textarea>
+          </div>
+        </div>
+
+        <div id="spool-results-container" style="display:none; margin-top:1.5rem;">
+          <div style="display:grid; grid-template-columns:300px 1fr; gap:2rem;">
+            <!-- Rendered Label Canvas -->
+            <div class="diff-preview-box">
+              <h4>Thermal Spool Live Preview</h4>
+              <div class="label-canvas-wrapper" style="height:480px;">
+                <img id="spool-preview-img" src="/static/img/placeholder_label.png" alt="ZPL Rendered Label">
+              </div>
+              <div id="spool-dims-badge" style="margin-top:0.75rem; font-size:0.8rem; font-weight:700; color:#1e40af;">
+                400x600 dots (25.0mm x 60.0mm) @ 8dpmm
+              </div>
+              <div id="spool-source-badge" style="font-size:0.7rem; color:var(--text-muted);">
+                Renderer: Labelary Cloud API
+              </div>
+            </div>
+
+            <!-- 3-Way Cross Check Table -->
+            <div>
+              <div class="section-header">
+                <h3 class="section-title">3-Way Cross-Check (Spool vs Artwork vs Order)</h3>
+                <div id="spool-score-badge" class="badge-status badge-pass">Score: 100%</div>
+              </div>
+              <div class="table-wrapper">
+                <table class="qc-table" id="spool-checks-table">
+                  <thead>
+                    <tr>
+                      <th>Check Target</th>
+                      <th>Expected Spec</th>
+                      <th>Spool Stream Extraction</th>
+                      <th>Status</th>
+                      <th>Details</th>
+                    </tr>
+                  </thead>
+                  <tbody><!-- Populated dynamically --></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         TAB 6: BATCH MULTI-LAYOUT QC
+         ====================================================================== -->
+    <section id="tab-batch" class="qc-tab-content">
+      <div class="workspace-card">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title"><span>📦</span> Batch Multi-Layout QC Dashboard</h2>
+            <p class="section-subtitle">Module 5 — Validate all SKU layout files for an entire RPO simultaneously with consolidated pass/fail matrix reporting.</p>
+          </div>
+          <button class="btn-primary" onclick="runBatchQC()">▶ Run Full Batch QC</button>
+        </div>
+
+        <div class="dropzone" style="margin-bottom:1.5rem;" onclick="document.getElementById('file-batch-layouts').click()">
+          <div class="dropzone-icon">📁</div>
+          <div class="dropzone-text">Drop Multiple BarTender Layout PDFs (e.g. all SKUs)</div>
+          <div class="dropzone-hint">Supports batch multi-file selection (1000341139_SKU1_M.pdf, SKU2_L.pdf, SKU3_XL.pdf)</div>
+          <input type="file" id="file-batch-layouts" accept=".pdf" multiple style="display:none" onchange="handleFileSelected(this, 'badge-batch')">
+          <div class="file-selected-badge" id="badge-batch">✓ 3 Batch Layout Files Loaded</div>
+        </div>
+
+        <div id="batch-results-container" style="display:none;">
+          <div class="section-header">
+            <h3 class="section-title">Batch Multi-SKU Verification Matrix</h3>
+            <div id="batch-score-badge" class="badge-status badge-pass">Batch Score: 100%</div>
+          </div>
+          <div class="table-wrapper">
+            <table class="qc-table" id="batch-matrix-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Layout File Name</th>
+                  <th>Target SKU / Size</th>
+                  <th>Static QC Score</th>
+                  <th>Variable QC Score</th>
+                  <th>Combined Score</th>
+                  <th>SKU Status</th>
+                </tr>
+              </thead>
+              <tbody><!-- Populated dynamically --></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         TAB 7: FINAL QC TESTING STAGE & STAGED SCORING (MODULE 6)
+         ====================================================================== -->
+    <section id="tab-final" class="qc-tab-content">
+      <div class="workspace-card">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title"><span>✨</span> Final AI QC & Staged Scoring Stage</h2>
+            <p class="section-subtitle">Module 6 — Rollup overall percentage across sectors. Enforces 50% Quality Gate, defect checklist, and embedded screenshot audit report.</p>
+          </div>
+          <button class="btn-primary" onclick="recalculateFinalScore()">⚡ Recalculate Final QC Score</button>
+        </div>
+
+        <div class="stage-summary-grid">
+          <!-- 1. Staged Score Gauge Card -->
+          <div class="score-card-gauge">
+            <h3 style="font-size:1.1rem; font-weight:700; margin-bottom:1rem;">Overall QC Score Card</h3>
+            <div class="gauge-circle" id="overall-gauge" style="--score-pct: 100;">
+              <div class="gauge-inner">
+                <span class="gauge-score" id="gauge-score-num">100%</span>
+                <span class="gauge-label" id="gauge-status-label">PASSED</span>
+              </div>
+            </div>
+
+            <!-- Sector Breakdown Bars -->
+            <div class="sector-progress-list">
+              <div class="sector-progress-item">
+                <div class="sector-progress-header">
+                  <span>Static Artwork QC</span>
+                  <strong id="bar-static-pct">100%</strong>
+                </div>
+                <div class="progress-bar-bg"><div class="progress-bar-fill" id="bar-static-fill" style="width:100%;"></div></div>
+              </div>
+
+              <div class="sector-progress-item">
+                <div class="sector-progress-header">
+                  <span>Variable Data QC</span>
+                  <strong id="bar-var-pct">100%</strong>
+                </div>
+                <div class="progress-bar-bg"><div class="progress-bar-fill" id="bar-var-fill" style="width:100%;"></div></div>
+              </div>
+
+              <div class="sector-progress-item">
+                <div class="sector-progress-header">
+                  <span>RFID & Serialization</span>
+                  <strong id="bar-rfid-pct">100%</strong>
+                </div>
+                <div class="progress-bar-bg"><div class="progress-bar-fill" id="bar-rfid-fill" style="width:100%;"></div></div>
+              </div>
+
+              <div class="sector-progress-item">
+                <div class="sector-progress-header">
+                  <span>Thermal Spool QC</span>
+                  <strong id="bar-spool-pct">100%</strong>
+                </div>
+                <div class="progress-bar-bg"><div class="progress-bar-fill" id="bar-spool-fill" style="width:100%;"></div></div>
+              </div>
+            </div>
+
+            <!-- Gate Alert Banner -->
+            <div id="gate-alert-box" class="gate-alert gate-alert-pass">
+              <div style="font-size:1.25rem;">✓</div>
+              <div>
+                <strong>QC Score Threshold Satisfied (≥50%)</strong>
+                <p style="font-size:0.75rem; margin-top:2px;">Final QC PDF & Excel certificate generation unlocked.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. Corrective Action Checklist (For any failed checks) -->
+          <div class="checklist-card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+              <h3 style="font-size:1.1rem; font-weight:700;">Actionable Corrective Checklist</h3>
+              <span id="fail-count-badge" style="font-size:0.75rem; font-weight:bold; background:#fee2e2; color:#dc2626; padding:0.2rem 0.6rem; border-radius:10px;">0 Issues</span>
+            </div>
+            <div id="checklist-items-container" style="max-height:480px; overflow-y:auto;">
+              <p style="color:#16a34a; font-size:0.85rem; padding:1rem; text-align:center;">✨ All verified fields passed specifications. No corrections required.</p>
+            </div>
+          </div>
+
+          <!-- 3. Defect Screenshot Uploader & Report Generation -->
+          <div class="screenshot-panel">
+            <h3 style="font-size:1.1rem; font-weight:700; margin-bottom:0.5rem;">Defect Screenshots</h3>
+            <p style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:1rem;">Attach screenshots of label discrepancies to embed into final PDF report.</p>
+
+            <div class="dropzone" style="padding:1rem;" onclick="document.getElementById('file-screenshot').click()">
+              <div style="font-size:1.5rem;">📸</div>
+              <div style="font-size:0.8rem; font-weight:600;">Attach Problem Screenshot</div>
+              <input type="file" id="file-screenshot" accept="image/*" style="display:none" onchange="uploadScreenshot(this)">
+            </div>
+
+            <div class="screenshot-gallery" id="screenshot-gallery-container">
+              <!-- Uploaded screenshots shown here -->
+            </div>
+
+            <div style="margin-top:auto; padding-top:1.5rem; display:flex; flex-direction:column; gap:0.75rem;">
+              <button id="btn-download-pdf" class="btn-success" style="width:100%; justify-content:center;" onclick="downloadPDFReport()">
+                📄 Download Final QC Report (PDF)
+              </button>
+              <button id="btn-download-excel" class="btn-secondary" style="width:100%; justify-content:center;" onclick="downloadExcelReport()">
+                📊 Download Audit Workbook (.xlsx)
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         TAB 8: QC AUDIT LOG & DATABASE HISTORY
+         ====================================================================== -->
+    <section id="tab-history" class="qc-tab-content">
+      <div class="workspace-card">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title"><span>📜</span> QC Audit History & Traceability Log</h2>
+            <p class="section-subtitle">SQLite database audit log tracking all QC runs, designer signoffs, RPO batches, and pass/fail statuses.</p>
+          </div>
+          <button class="btn-secondary" onclick="loadAuditHistory()">🔄 Refresh Audit Trail</button>
+        </div>
+
+        <div class="table-wrapper">
+          <table class="qc-table" id="history-table">
+            <thead>
+              <tr>
+                <th>Run ID</th>
+                <th>Designer</th>
+                <th>Active RPO</th>
+                <th>Item Code</th>
+                <th>Overall Score</th>
+                <th>Final Status</th>
+                <th>Timestamp</th>
+              </tr>
+            </thead>
+            <tbody><!-- Populated dynamically --></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer-banner">
+      © 2026 Layout Analysis Tools • Powered by AI • r-pac International Corp.
+    </footer>
+  </main>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
