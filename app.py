@@ -157,6 +157,26 @@ def api_template_compare_pixel_density():
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
+@app.route('/api/template-compare/export/csv', methods=['POST'])
+def api_template_compare_export_csv():
+    try:
+        data = request.get_json() or {}
+        res = data.get('result', {})
+        csv_text = template_engine.export_findings_csv(res)
+        
+        mem = io.BytesIO()
+        mem.write(csv_text.encode('utf-8'))
+        mem.seek(0)
+        
+        return send_file(
+            mem,
+            mimetype='text/csv',
+            as_attachment=True,
+            download_name=f"Template_Compare_Findings_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+        )
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
 # --- MODULE 1: STATIC ARTWORK QC ---
 @app.route('/api/qc/static', methods=['POST'])
 def qc_static():

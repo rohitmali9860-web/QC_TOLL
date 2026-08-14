@@ -295,3 +295,21 @@ class TemplateCompareEngine:
             'diff_image_b64': diff_b64,
             'difference_regions_count': len([c for c in contours if cv2.contourArea(c) > 80])
         }
+
+    def export_findings_csv(self, result):
+        """Exports comparison findings into CSV formatted text."""
+        import csv
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow(['Field_ID', 'Type', 'Spec_Value_A', 'Layout_Value_B', 'Deviation_Distance_pt', 'Status', 'Details'])
+
+        for m in result.get('matched_fields', []):
+            writer.writerow([m['id'], m['type'], m['text_a'], m['text_b'], m['distance_pt'], m['status'], f"Delta X: {m['delta_x']}pt, Delta Y: {m['delta_y']}pt"])
+
+        for mm in result.get('mismatched_fields', []):
+            writer.writerow([mm['id'], mm['type'], mm['text_a'], mm['text_b'], mm['distance_pt'], mm['status'], mm.get('reason', '')])
+
+        for ex in result.get('extra_in_b', []):
+            writer.writerow([ex['id'], ex['type'], 'N/A', ex['text'], 'N/A', ex['status'], 'Unexpected field in output'])
+
+        return output.getvalue()
