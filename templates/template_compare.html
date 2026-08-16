@@ -147,9 +147,43 @@
 
       <div class="details-section" id="detailsSection"></div>
 
-      <div class="visual-section" id="visualSection" hidden>
-        <h3>Visual Heatmap Comparison</h3>
-        <img id="diffImage" src="" alt="Difference Map" style="max-height: 480px; object-fit: contain;">
+      <!-- Spec Sheet Metadata Header (When Full Artwork Spec is detected) -->
+      <div id="specHeaderBanner" style="display:none; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+          <h3 style="margin: 0; color: #1e3a8a; font-size: 1.05rem; display: flex; align-items: center; gap: 6px;">
+            📄 Full Customer Artwork Spec Sheet Detected
+          </h3>
+          <span class="type-badge" style="background:#dbeafe; color:#1e40af; font-size: 0.8rem;">Auto ROI Cropped</span>
+        </div>
+        <div id="specMetaPills" style="display: flex; flex-wrap: wrap; gap: 0.75rem; font-size: 0.85rem; color: #334155;">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- Spec Field Table Matrix (10 Rules) -->
+      <div id="specMatrixSection" style="display:none; margin-bottom: 1.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+          <h3 style="margin: 0; color: #1e3a8a; font-size: 1.1rem;">Specification Field Matrix & Typography Match (Rules 1–10)</h3>
+          <button onclick="downloadCSVReport()" class="btn btn-secondary" style="padding: 4px 10px; font-size: 0.8rem;">📥 Export CSV</button>
+        </div>
+        <div class="table-container">
+          <table id="specMatrixTable">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Field Description</th>
+                <th>Required Font</th>
+                <th>Field Info</th>
+                <th>Layout Value (PDF B)</th>
+                <th>Font Match</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="specMatrixTableBody">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <!-- View Field Details Button -->
@@ -162,7 +196,7 @@
             <line x1="16" y1="17" x2="8" y2="17"></line>
             <polyline points="10 9 9 9 8 9"></polyline>
           </svg>
-          View Field Details
+          View Field Coordinate Details
         </button>
       </div>
     </div>

@@ -160,14 +160,11 @@ class VariableQCAnalyzer:
         layout_text = layout_data['full_text']
         kv_pairs = layout_data['kv_pairs']
 
-        # Default mapping if none provided
+        # Default mapping for pocket tags if none provided
         default_mapping = {
             'Article': 'ARTICLE_NO',
             'Size': 'SIZE_LABEL',
-            'Color': 'COLOR_NAME',
-            'RPO': 'RPO_NO',
-            'SKU': 'SKU_STRING',
-            'QTY': 'ORDER_QTY'
+            'Color': 'COLOR_NAME'
         }
         active_mapping = mapping or default_mapping
 

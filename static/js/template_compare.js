@@ -75,7 +75,7 @@ function loadDemoPair(variant = 'pass') {
   fileB = 'DEMO_B';
   window.demoVariant = variant;
 
-  document.getElementById('fileNameA').innerText = 'layout_pass_sku1.pdf (Reference Master)';
+  document.getElementById('fileNameA').innerText = 'artwork_signed_spec.pdf (Customer Spec Sheet)';
   document.getElementById('fileNameB').innerText = variant === 'fail' ? 'layout_fail_font_sku2.pdf (Mismatched Output)' : 'layout_pass_sku1.pdf (Matched Output)';
   checkFilesReady();
 }
@@ -197,37 +197,93 @@ function displayResults(res, mode) {
   document.getElementById('scorePercentage').innerText = res.score_percentage;
 
   const methodInfo = document.getElementById('methodInfo');
+  const specBanner = document.getElementById('specHeaderBanner');
+  const specMatrixSec = document.getElementById('specMatrixSection');
+  const specTbody = document.getElementById('specMatrixTableBody');
+  const metaPills = document.getElementById('specMetaPills');
+
   if (mode === 'position') {
-    methodInfo.innerHTML = `
-      <strong>Method:</strong> Position-Based Alignment Match<br>
-      <strong>Tolerance:</strong> ±${res.tolerance_pt} pt<br>
-      <strong>Summary:</strong> ${res.matched_count} of ${res.total_fields_a} fields matched within tolerance.
-    `;
-    
+    if (res.is_spec_sheet) {
+      methodInfo.innerHTML = `
+        <strong>Method:</strong> Artwork Specification Matrix & Typography Match<br>
+        <strong>Rules Verified:</strong> ${res.matched_count} of ${res.total_fields_a} mandatory rules passed (Font & Placement)<br>
+        <strong>Dieline / Tag:</strong> ${res.spec_header ? res.spec_header.size_finished : '25x60mm'}
+      `;
+
+      // Show Spec Header Banner
+      if (specBanner && res.spec_header) {
+        specBanner.style.display = 'block';
+        metaPills.innerHTML = `
+          <span>🏢 <strong>Customer:</strong> ${res.spec_header.customer}</span>
+          <span>🏷️ <strong>Item Ref:</strong> ${res.spec_header.item_ref}</span>
+          <span>📐 <strong>Finished Size:</strong> ${res.spec_header.size_finished}</span>
+          <span>📡 <strong>RFID Inlay:</strong> ${res.spec_header.rfid_inlay}</span>
+          <span>📅 <strong>Spec Date:</strong> ${res.spec_header.date}</span>
+        `;
+      }
+
+      // Render 10-Row Spec Matrix Table
+      if (specMatrixSec && res.spec_matrix) {
+        specMatrixSec.style.display = 'block';
+        specTbody.innerHTML = '';
+        res.spec_matrix.forEach(row => {
+          const tr = document.createElement('tr');
+          const isFontPass = (row.font_status === 'PASS');
+          const isRowPass = (row.status === 'MATCHED');
+
+          tr.innerHTML = `
+            <td><strong>${row.id}</strong></td>
+            <td><strong>${row.description}</strong></td>
+            <td><code>${row.required_font}</code></td>
+            <td><span class="type-badge" style="background:${row.field_info.includes('Fixed') ? '#eff6ff' : '#fef3c7'}; color:${row.field_info.includes('Fixed') ? '#1e40af' : '#b45309'};">${row.field_info}</span></td>
+            <td>${row.layout_text}</td>
+            <td>
+              <span class="type-badge" style="background:${isFontPass ? '#dcfce7' : '#fee2e2'}; color:${isFontPass ? '#166534' : '#991b1b'};">
+                ${isFontPass ? '✓ ' + row.font_details : '✗ ' + row.font_details}
+              </span>
+            </td>
+            <td>
+              <span class="${isRowPass ? 'badge-matched' : 'badge-mismatched'}">${row.status}</span>
+            </td>
+          `;
+          specTbody.appendChild(tr);
+        });
+      }
+    } else {
+      if (specBanner) specBanner.style.display = 'none';
+      if (specMatrixSec) specMatrixSec.style.display = 'none';
+      methodInfo.innerHTML = `
+        <strong>Method:</strong> Position-Based Alignment Match<br>
+        <strong>Tolerance:</strong> ±${res.tolerance_pt} pt<br>
+        <strong>Summary:</strong> ${res.matched_count} of ${res.total_fields_a} fields matched within tolerance.
+      `;
+    }
+
     // Details boxes
     const detailsSection = document.getElementById('detailsSection');
     detailsSection.innerHTML = `
       <div class="detail-box">
-        <div class="detail-label">PDF A Total Fields</div>
+        <div class="detail-label">Spec Required Rules</div>
         <div class="detail-value">${res.total_fields_a}</div>
       </div>
       <div class="detail-box">
-        <div class="detail-label">PDF B Total Fields</div>
+        <div class="detail-label">Layout Elements Tested</div>
         <div class="detail-value">${res.total_fields_b}</div>
       </div>
       <div class="detail-box">
-        <div class="detail-label" style="color:#16a34a;">Matched Fields</div>
+        <div class="detail-label" style="color:#16a34a;">Passed Rules</div>
         <div class="detail-value" style="color:#16a34a;">${res.matched_count}</div>
       </div>
       <div class="detail-box">
-        <div class="detail-label" style="color:#dc2626;">Mismatches / Gaps</div>
+        <div class="detail-label" style="color:#dc2626;">Discrepancies / Gaps</div>
         <div class="detail-value" style="color:#dc2626;">${res.mismatched_count}</div>
       </div>
     `;
 
-    document.getElementById('visualSection').hidden = true;
     document.getElementById('fieldDetailsActions').hidden = false;
   } else {
+    if (specBanner) specBanner.style.display = 'none';
+    if (specMatrixSec) specMatrixSec.style.display = 'none';
     methodInfo.innerHTML = `
       <strong>Method:</strong> Pixel Density / SSIM Gaussian Blur Difference<br>
       <strong>Kernel Blur:</strong> ${res.blur_amount}px<br>
@@ -250,10 +306,29 @@ function displayResults(res, mode) {
       </div>
     `;
 
-    const visSection = document.getElementById('visualSection');
-    visSection.hidden = false;
-    document.getElementById('diffImage').src = res.diff_image_b64;
     document.getElementById('fieldDetailsActions').hidden = true;
+  }
+}
+
+async function downloadCSVReport() {
+  if (!currentResults) return;
+  try {
+    const resp = await fetch('/api/template-compare/export/csv', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ result: currentResults })
+    });
+    const blob = await resp.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `QC_Spec_Comparison_${Date.now()}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  } catch (err) {
+    console.error('CSV download error:', err);
+    alert('Error exporting CSV.');
   }
 }
 

@@ -113,7 +113,7 @@ def api_template_compare_position():
 
         if use_demo:
             variant = request.form.get('demo_variant', 'pass')
-            pdf_a_path = os.path.join(DATA_DIR, 'layout_pass_sku1.pdf')
+            pdf_a_path = os.path.join(DATA_DIR, 'artwork_signed_spec.pdf')
             pdf_b_path = os.path.join(DATA_DIR, 'layout_fail_font_sku2.pdf' if variant == 'fail' else 'layout_pass_sku1.pdf')
         else:
             file_a = request.files.get('pdf_a')
@@ -139,7 +139,7 @@ def api_template_compare_pixel_density():
 
         if use_demo:
             variant = request.form.get('demo_variant', 'pass')
-            pdf_a_path = os.path.join(DATA_DIR, 'layout_pass_sku1.pdf')
+            pdf_a_path = os.path.join(DATA_DIR, 'artwork_signed_spec.pdf')
             pdf_b_path = os.path.join(DATA_DIR, 'layout_fail_font_sku2.pdf' if variant == 'fail' else 'layout_pass_sku1.pdf')
         else:
             file_a = request.files.get('pdf_a')
