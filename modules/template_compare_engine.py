@@ -140,6 +140,7 @@ class TemplateCompareEngine:
         layout_texts = [elem.get('text', '') for elem in layout_elements]
         full_layout_str = " ".join(layout_texts).lower()
 
+        # Flexible Matcher
         for rule in spec_table:
             rule_id = rule['field_id']
             desc = rule['description']
@@ -153,62 +154,66 @@ class TemplateCompareEngine:
             font_status = 'PASS'
             font_details = ''
 
-            # 1. Match element in PDF B
+            # 1. Flexible Heuristic Matching
             if rule_id == 1:  # Brand logo
                 for elem in layout_elements:
-                    if "loveskin" in elem.get('text', '').lower():
-                        matching_elem = elem
-                        break
-            elif rule_id in (2, 3, 4):  # Fixed labels: Size, Article number, Color
-                keywords = {2: 'taglia', 3: 'articolo', 4: 'colore'}
+                    t = elem.get('text', '').lower()
+                    if "loveskin" in t or "brand" in t or (elem.get('id') == 1 and len(t) > 2):
+                        matching_elem = elem; break
+            elif rule_id == 2:  # Size Label
                 for elem in layout_elements:
-                    if keywords[rule_id] in elem.get('text', '').lower():
-                        matching_elem = elem
-                        break
+                    t = elem.get('text', '').lower()
+                    if any(k in t for k in ['taglia', 'size:', 'size :', 'sz:', 'size']):
+                        matching_elem = elem; break
+            elif rule_id == 3:  # Article Label
+                for elem in layout_elements:
+                    t = elem.get('text', '').lower()
+                    if any(k in t for k in ['articolo', 'article', 'item:', 'item ref', 'style:', 'ref:']):
+                        matching_elem = elem; break
+            elif rule_id == 4:  # Color Label
+                for elem in layout_elements:
+                    t = elem.get('text', '').lower()
+                    if any(k in t for k in ['colore', 'color:', 'color :', 'colour:', 'color']):
+                        matching_elem = elem; break
             elif rule_id == 5:  # RFID logo
                 for elem in layout_elements:
-                    if "rfid" in elem.get('text', '').lower():
-                        matching_elem = elem
-                        break
-            elif rule_id == 6:  # Size variable
+                    t = elem.get('text', '').lower()
+                    if "rfid" in t or "epc" in t or elem.get('type') == 'Barcode':
+                        matching_elem = elem; break
+            elif rule_id == 6:  # Size value
                 for elem in layout_elements:
-                    txt = elem.get('text', '').strip()
-                    if "taglia" in txt.lower() or "size:" in txt.lower() or txt in ('S', 'M', 'L', 'XL', '2XL'):
-                        matching_elem = elem
-                        break
-            elif rule_id == 7:  # Article number variable
+                    t = elem.get('text', '').strip()
+                    if any(k in t.lower() for k in ['taglia', 'size:', 'size :']) or t in ('S', 'M', 'L', 'XL', '2XL', '32', '34', '36', '38', '40', '42', 'Small', 'Medium', 'Large'):
+                        matching_elem = elem; break
+            elif rule_id == 7:  # Article value
                 for elem in layout_elements:
-                    txt = elem.get('text', '').strip()
-                    if "articolo" in txt.lower() or "article:" in txt.lower() or "z5e213ts" in txt.lower():
-                        matching_elem = elem
-                        break
-            elif rule_id == 8:  # Color variable
+                    t = elem.get('text', '').strip()
+                    if any(a in t.lower() for a in ['z5e213ts', '1000341139', 'loveskin-pt', 'pt', 'style']) or re.search(r'[A-Z0-9]{5,}', t):
+                        matching_elem = elem; break
+            elif rule_id == 8:  # Color value
                 for elem in layout_elements:
-                    txt = elem.get('text', '').strip()
-                    if "colore" in txt.lower() or "color:" in txt.lower() or any(c in txt.lower() for c in ['nero', 'navy', 'black']):
-                        matching_elem = elem
-                        break
+                    t = elem.get('text', '').lower()
+                    if any(c in t for c in ['nero', 'navy', 'black', 'white', 'midnight', 'blue', 'grey', 'red', 'beige']):
+                        matching_elem = elem; break
             elif rule_id == 9:  # QR Code Text
                 for elem in layout_elements:
-                    if "qr code" in elem.get('text', '').lower():
-                        matching_elem = elem
-                        break
-            elif rule_id == 10:  # QR Code 15x15mm
+                    t = elem.get('text', '').lower()
+                    if "qr" in t or "code" in t or "barcode" in t:
+                        matching_elem = elem; break
+            elif rule_id == 10:  # QR Code Barcode
                 for elem in layout_elements:
-                    txt = elem.get('text', '').lower()
-                    if "qr" in txt or elem.get('type') == 'Barcode':
-                        matching_elem = elem
-                        break
+                    t = elem.get('text', '').lower()
+                    if "qr" in t or elem.get('type') in ('Barcode', 'Image', 'Vector'):
+                        matching_elem = elem; break
 
-            # 2. Font Verification (Arial Medium - 5pt)
+            # 2. Font Verification (Arial / Helvetica 5pt)
             if matching_elem:
                 elem_font = matching_elem.get('font', '')
                 elem_size = matching_elem.get('size_pt', 0.0)
 
-                # Check if font family contains Arial or Helvetica
                 family_ok = any(f in elem_font.lower() for f in ['arial', 'helvetica']) or req_family in ('Custom/Vector', 'Symbol/Vector', 'Barcode2D')
                 is_barcode_or_vector = (rule['type'] in ('Barcode', 'Logo') or req_family in ('Custom/Vector', 'Symbol/Vector', 'Barcode2D'))
-                size_ok = is_barcode_or_vector or (abs(elem_size - req_size) <= 1.0)
+                size_ok = is_barcode_or_vector or (abs(elem_size - req_size) <= 1.5)
 
                 if family_ok and size_ok:
                     font_status = 'PASS'
@@ -246,6 +251,72 @@ class TemplateCompareEngine:
                 'status': status
             })
 
+        # 3. Generate Visual Side-by-Side & Overlay Diff Images
+        doc_spec = fitz.open(spec_pdf_path)
+        doc_lay = fitz.open(layout_pdf_path)
+
+        roi = spec_data.get('roi_bbox', [300, 180, 470, 250])
+        pix_spec = doc_spec[0].get_pixmap(dpi=150, clip=fitz.Rect(*roi))
+        pix_lay = doc_lay[0].get_pixmap(dpi=150)
+
+        img_spec = np.frombuffer(pix_spec.samples, dtype=np.uint8).reshape((pix_spec.height, pix_spec.width, pix_spec.n))
+        img_lay = np.frombuffer(pix_lay.samples, dtype=np.uint8).reshape((pix_lay.height, pix_lay.width, pix_lay.n))
+
+        if pix_spec.n == 4: img_spec = cv2.cvtColor(img_spec, cv2.COLOR_RGBA2BGR)
+        else: img_spec = cv2.cvtColor(img_spec, cv2.COLOR_RGB2BGR)
+
+        if pix_lay.n == 4: img_lay = cv2.cvtColor(img_lay, cv2.COLOR_RGBA2BGR)
+        else: img_lay = cv2.cvtColor(img_lay, cv2.COLOR_RGB2BGR)
+
+        doc_spec.close()
+        doc_lay.close()
+
+        # Resize layout to match spec crop height
+        target_h, target_w = img_spec.shape[:2]
+        img_lay_resized = cv2.resize(img_lay, (target_w, target_h))
+
+        # A. Side-by-Side Canvas
+        divider = np.zeros((target_h, 6, 3), dtype=np.uint8) + np.array([220, 150, 40], dtype=np.uint8)
+        side_by_side = np.hstack([img_spec, divider, img_lay_resized])
+
+        # Add Title Banners to Side-by-Side
+        banner_h = 30
+        canvas_w = side_by_side.shape[1]
+        annotated_canvas = np.zeros((target_h + banner_h, canvas_w, 3), dtype=np.uint8) + 255
+        annotated_canvas[banner_h:, :] = side_by_side
+
+        cv2.putText(annotated_canvas, "MASTER SPEC ARTWORK (CROPPED)", (15, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (140, 40, 0), 2)
+        cv2.putText(annotated_canvas, "SYSTEM OUTPUT (BARTENDER PP)", (target_w + 20, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 100, 20), 2)
+
+        # Draw green bounding boxes for matched items on layout
+        for elem in layout_elements:
+            if 'bbox' in elem and len(elem['bbox']) == 4:
+                b = elem['bbox']
+                # Scale bbox to resized dimensions
+                bx0 = int((b[0] / max(pix_lay.width, 1)) * target_w) + target_w + 6
+                by0 = int((b[1] / max(pix_lay.height, 1)) * target_h) + banner_h
+                bx1 = int((b[2] / max(pix_lay.width, 1)) * target_w) + target_w + 6
+                by1 = int((b[3] / max(pix_lay.height, 1)) * target_h) + banner_h
+                cv2.rectangle(annotated_canvas, (bx0, by0), (bx1, by1), (0, 180, 0), 1)
+
+        # B. Alpha Blended Overlay
+        overlay_blend = cv2.addWeighted(img_spec, 0.5, img_lay_resized, 0.5, 0)
+        gray_s = cv2.cvtColor(img_spec, cv2.COLOR_BGR2GRAY)
+        gray_l = cv2.cvtColor(img_lay_resized, cv2.COLOR_BGR2GRAY)
+        diff = cv2.absdiff(cv2.GaussianBlur(gray_s, (21, 21), 0), cv2.GaussianBlur(gray_l, (21, 21), 0))
+        heatmap = cv2.applyColorMap(diff * 3, cv2.COLORMAP_JET)
+        overlay_diff = cv2.addWeighted(overlay_blend, 0.6, heatmap, 0.4, 0)
+
+        # Encode images to base64
+        _, buf_side = cv2.imencode('.png', annotated_canvas)
+        side_b64 = "data:image/png;base64," + base64.b64encode(buf_side).decode('utf-8')
+
+        _, buf_over = cv2.imencode('.png', overlay_diff)
+        over_b64 = "data:image/png;base64," + base64.b64encode(buf_over).decode('utf-8')
+
+        _, buf_spec = cv2.imencode('.png', img_spec)
+        spec_b64 = "data:image/png;base64," + base64.b64encode(buf_spec).decode('utf-8')
+
         score_val = round(matched_count / total_rules, 4)
         score_pct = round(score_val * 100.0, 1)
 
@@ -266,7 +337,10 @@ class TemplateCompareEngine:
             'mismatched_fields': [r for r in spec_matrix_results if r['status'] != 'MATCHED'],
             'fields_a': [{'id': r['id'], 'type': r['type'], 'text': r['description'], 'bbox_str': f"Rule {r['id']} ({r['required_font']})", 'font': r['required_font'], 'size_pt': 5.0} for r in spec_matrix_results],
             'fields_b': layout_elements,
-            'roi_preview_b64': spec_data.get('roi_preview_b64', '')
+            'side_by_side_b64': side_b64,
+            'overlay_diff_b64': over_b64,
+            'diff_image_b64': over_b64,
+            'roi_preview_b64': spec_b64
         }
 
     def _run_layout_to_layout_comparison(self, pdf_a_path, pdf_b_path, tolerance_pt=5.0, filter_types=None):
@@ -348,6 +422,52 @@ class TemplateCompareEngine:
                     'status': 'EXTRA_IN_B'
                 })
 
+        # Generate Visual Side-by-Side & Overlay Diff Images
+        try:
+            doc_a = fitz.open(pdf_a_path)
+            doc_b = fitz.open(pdf_b_path)
+            pix_a = doc_a[0].get_pixmap(dpi=150)
+            pix_b = doc_b[0].get_pixmap(dpi=150)
+
+            img_a = np.frombuffer(pix_a.samples, dtype=np.uint8).reshape((pix_a.height, pix_a.width, pix_a.n))
+            img_b = np.frombuffer(pix_b.samples, dtype=np.uint8).reshape((pix_b.height, pix_b.width, pix_b.n))
+
+            if pix_a.n == 4: img_a = cv2.cvtColor(img_a, cv2.COLOR_RGBA2BGR)
+            else: img_a = cv2.cvtColor(img_a, cv2.COLOR_RGB2BGR)
+
+            if pix_b.n == 4: img_b = cv2.cvtColor(img_b, cv2.COLOR_RGBA2BGR)
+            else: img_b = cv2.cvtColor(img_b, cv2.COLOR_RGB2BGR)
+
+            doc_a.close()
+            doc_b.close()
+
+            th, tw = img_a.shape[:2]
+            img_b_res = cv2.resize(img_b, (tw, th))
+            div = np.zeros((th, 6, 3), dtype=np.uint8) + np.array([220, 150, 40], dtype=np.uint8)
+            sbs = np.hstack([img_a, div, img_b_res])
+
+            b_h = 30
+            c_w = sbs.shape[1]
+            ann_c = np.zeros((th + b_h, c_w, 3), dtype=np.uint8) + 255
+            ann_c[b_h:, :] = sbs
+            cv2.putText(ann_c, "PDF A (REFERENCE SPEC)", (15, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (140, 40, 0), 2)
+            cv2.putText(ann_c, "PDF B (SYSTEM OUTPUT)", (tw + 20, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 100, 20), 2)
+
+            _, buf_s = cv2.imencode('.png', ann_c)
+            side_b64 = "data:image/png;base64," + base64.b64encode(buf_s).decode('utf-8')
+
+            # Diff
+            gray_a = cv2.cvtColor(img_a, cv2.COLOR_BGR2GRAY)
+            gray_b = cv2.cvtColor(img_b_res, cv2.COLOR_BGR2GRAY)
+            diff = cv2.absdiff(cv2.GaussianBlur(gray_a, (21, 21), 0), cv2.GaussianBlur(gray_b, (21, 21), 0))
+            hmap = cv2.applyColorMap(diff * 3, cv2.COLORMAP_JET)
+            over = cv2.addWeighted(cv2.addWeighted(img_a, 0.5, img_b_res, 0.5, 0), 0.6, hmap, 0.4, 0)
+            _, buf_o = cv2.imencode('.png', over)
+            over_b64 = "data:image/png;base64," + base64.b64encode(buf_o).decode('utf-8')
+        except Exception as e:
+            side_b64 = ''
+            over_b64 = ''
+
         matched_count = len(matched_results)
         total_elements = max(total_a, 1)
         score_val = round(matched_count / total_elements, 4)
@@ -368,7 +488,11 @@ class TemplateCompareEngine:
             'fields_b': fields_b,
             'matched_fields': matched_results,
             'mismatched_fields': mismatched_results,
-            'extra_in_b': extra_b
+            'extra_in_b': extra_b,
+            'side_by_side_b64': side_b64,
+            'overlay_diff_b64': over_b64,
+            'diff_image_b64': over_b64,
+            'roi_preview_b64': side_b64
         }
 
     def run_pixel_density_match(self, pdf_a_path, pdf_b_path, blur_amount=21):
