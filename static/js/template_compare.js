@@ -39,27 +39,92 @@ function setupFileUploads() {
   const inpA = document.getElementById('fileInputA');
   const inpB = document.getElementById('fileInputB');
 
-  if (dzA && inpA) {
-    dzA.addEventListener('click', () => inpA.click());
+  // Drag & drop handlers
+  [dzA, dzB].forEach((dz, idx) => {
+    if (!dz) return;
+    const inp = idx === 0 ? inpA : inpB;
+
+    dz.addEventListener('click', (e) => {
+      if (e.target.classList.contains('clear-file-btn')) {
+        e.stopPropagation();
+        if (idx === 0) {
+          fileA = null;
+          document.getElementById('fileNameA').innerHTML = '';
+        } else {
+          fileB = null;
+          document.getElementById('fileNameB').innerHTML = '';
+        }
+        checkFilesReady();
+        return;
+      }
+      if (inp) inp.click();
+    });
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+      dz.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dz.style.borderColor = '#2563eb';
+        dz.style.background = '#eff6ff';
+      });
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      dz.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dz.style.borderColor = '#93c5fd';
+        dz.style.background = '#f8fafc';
+      });
+    });
+
+    dz.addEventListener('drop', (e) => {
+      const dt = e.dataTransfer;
+      const files = dt.files;
+      if (files.length > 0 && files[0].type === 'application/pdf') {
+        if (idx === 0) {
+          fileA = files[0];
+          displaySelectedFile('fileNameA', fileA);
+        } else {
+          fileB = files[0];
+          displaySelectedFile('fileNameB', fileB);
+        }
+        checkFilesReady();
+      }
+    });
+  });
+
+  if (inpA) {
     inpA.addEventListener('change', e => {
       if (e.target.files.length > 0) {
         fileA = e.target.files[0];
-        document.getElementById('fileNameA').innerText = fileA.name;
+        displaySelectedFile('fileNameA', fileA);
         checkFilesReady();
       }
     });
   }
 
-  if (dzB && inpB) {
-    dzB.addEventListener('click', () => inpB.click());
+  if (inpB) {
     inpB.addEventListener('change', e => {
       if (e.target.files.length > 0) {
         fileB = e.target.files[0];
-        document.getElementById('fileNameB').innerText = fileB.name;
+        displaySelectedFile('fileNameB', fileB);
         checkFilesReady();
       }
     });
   }
+}
+
+function displaySelectedFile(elementId, file) {
+  const el = document.getElementById(elementId);
+  if (!el) return;
+  const sizeKb = file.size ? ` (${Math.round(file.size / 1024)} KB)` : '';
+  el.innerHTML = `
+    <span style="display:inline-flex; align-items:center; gap:6px; background:#dcfce7; color:#166534; padding:3px 10px; border-radius:12px; font-weight:700; font-size:0.85rem;">
+      📄 ${file.name}${sizeKb}
+      <button class="clear-file-btn" style="background:none; border:none; color:#dc2626; font-size:1rem; cursor:pointer; font-weight:bold; padding:0 4px;" title="Remove file">✕</button>
+    </span>
+  `;
 }
 
 function checkFilesReady() {
@@ -75,8 +140,18 @@ function loadDemoPair(variant = 'pass') {
   fileB = 'DEMO_B';
   window.demoVariant = variant;
 
-  document.getElementById('fileNameA').innerText = 'artwork_signed_spec.pdf (Customer Spec Sheet)';
-  document.getElementById('fileNameB').innerText = variant === 'fail' ? 'layout_fail_font_sku2.pdf (Mismatched Output)' : 'layout_pass_sku1.pdf (Matched Output)';
+  document.getElementById('fileNameA').innerHTML = `
+    <span style="display:inline-flex; align-items:center; gap:6px; background:#dbeafe; color:#1e40af; padding:3px 10px; border-radius:12px; font-weight:700; font-size:0.85rem;">
+      📄 artwork_signed_spec.pdf (Customer Spec Sheet)
+      <button class="clear-file-btn" style="background:none; border:none; color:#dc2626; font-size:1rem; cursor:pointer; font-weight:bold; padding:0 4px;" title="Remove file">✕</button>
+    </span>
+  `;
+  document.getElementById('fileNameB').innerHTML = `
+    <span style="display:inline-flex; align-items:center; gap:6px; background:#dbeafe; color:#1e40af; padding:3px 10px; border-radius:12px; font-weight:700; font-size:0.85rem;">
+      📄 ${variant === 'fail' ? 'layout_fail_font_sku2.pdf (Mismatched Output)' : 'layout_pass_sku1.pdf (Matched Output)'}
+      <button class="clear-file-btn" style="background:none; border:none; color:#dc2626; font-size:1rem; cursor:pointer; font-weight:bold; padding:0 4px;" title="Remove file">✕</button>
+    </span>
+  `;
   checkFilesReady();
 }
 
@@ -340,18 +415,44 @@ function setupModal() {
   const modal = document.getElementById('fieldDetailsModal');
   const closeBtn = document.getElementById('closeModal');
 
+  function openModal() {
+    if (!modal) return;
+    modal.hidden = false;
+    modal.style.display = 'flex';
+    modal.classList.add('active');
+    renderModalTable(activeModalTab);
+  }
+
+  function closeModal() {
+    if (!modal) return;
+    modal.hidden = true;
+    modal.style.display = 'none';
+    modal.classList.remove('active');
+  }
+
   if (btnView) {
-    btnView.addEventListener('click', () => {
-      modal.hidden = false;
-      renderModalTable(activeModalTab);
-    });
+    btnView.addEventListener('click', openModal);
   }
 
   if (closeBtn) {
-    closeBtn.addEventListener('click', () => {
-      modal.hidden = true;
+    closeBtn.addEventListener('click', closeModal);
+  }
+
+  // Close when clicking dark backdrop outside modal-content
+  if (modal) {
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        closeModal();
+      }
     });
   }
+
+  // Close on Escape key press
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal && !modal.hidden) {
+      closeModal();
+    }
+  });
 
   // Modal Tab switching
   ['showFieldsA', 'showFieldsB', 'showMatched', 'showMismatched'].forEach(tabId => {

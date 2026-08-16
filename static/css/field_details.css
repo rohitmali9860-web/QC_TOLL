@@ -10,11 +10,20 @@
   height: 100%;
   background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(4px);
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: center;
   z-index: 1000;
   padding: 1.5rem;
+}
+
+.modal.active,
+.modal:not([hidden]) {
+  display: flex !important;
+}
+
+.modal[hidden] {
+  display: none !important;
 }
 
 .modal-content {
